@@ -10,7 +10,7 @@ class LocustAdapter(IAdapter):
     DEFAULT_PORT = 8089
     DEFAULT_HOST = "0.0.0.0"
     def __init__(self, test_file: str, host: str = DEFAULT_HOST, port: int = DEFAULT_PORT):
-        super().__init__(host=host, test_file=test_file)
+        super().__init__(test_file=test_file)
         self._port = port
         self._session = rq.Session()
         self._host = f"http://{host}:{self._port}"

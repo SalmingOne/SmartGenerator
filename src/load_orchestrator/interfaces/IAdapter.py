@@ -5,9 +5,8 @@ from abc import ABC, abstractmethod
 class IAdapter(ABC):
     """Abstract interface for adapters."""
 
-    def __init__(self, test_file: str, host: str):
+    def __init__(self, test_file: str):
         self.test_file = test_file
-        self.host = host
         self._process: subprocess.Popen | None = None
 
     @abstractmethod

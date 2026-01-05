@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
 
 
@@ -8,12 +8,21 @@ class Decision(Enum):
     STOP = auto()
 
 class State(Enum):
-    INITIAL = auto()
+    INIT = auto()
     RUNNING = auto()
-    STOPPED = auto()
+    FINISHED = auto()
 
-class Reason(Enum):
-    ERROR = auto()
+
+class StopReason(Enum):
+    """Причины остановки"""
+    DEGRADATION = auto()     # Найдена деградация
+    BREAK_POINT = auto()     # Система сломалась
+    TARGET_REACHED = auto()  # Цель достигнута
+    SLA_VIOLATED = auto()    # SLA нарушен
+    MAX_USERS = auto()       # Достигнут лимит юзеров
+    TIMEOUT = auto()         # Таймаут теста
+    MANUAL = auto()          # Ручная остановка
+    ERROR = auto()           # Ошибка
 
 
 @dataclass
@@ -29,16 +38,20 @@ class RawMetrics:
     total_requests: int
 
 @dataclass
-class Metrics:
-    stability: float
-    scale_factor: float = 0.0
-    degradation_index: float = 0.0
+class AnalyzedMetrics:
+    """Метрики после анализа"""
+    raw: RawMetrics
+    stability: float = 0.0            # P99/P50 — чем ближе к 1, тем стабильнее
+    scaling_efficiency: float = 0.0   # delta_rps / delta_users
+    degradation_index: float = 0.0    # Комплексный индекс (0 — норм, 1 — плохо)
+
 
 @dataclass
-class Result:
+class TestResult:
+    """Результат теста"""
     started_at: float
-    finished_at: float
+    finished_at: float | None
     max_stable_users: int
     max_stable_rps: float
-    stop_reason: Reason
-    stability_index: float
+    stop_reason: StopReason
+    history: list[AnalyzedMetrics] = field(default_factory=list)

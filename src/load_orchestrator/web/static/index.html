@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Load Orchestrator</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Load Orchestrator</h1>
+            <button id="theme-toggle">Dark/Light</button>
+        </header>
+
+        <!-- TODO: Configuration Section -->
+        <section class="config-section">
+            <h2>Configuration</h2>
+            <!-- Input fields for config -->
+            <button id="start-test">Start Test</button>
+            <button id="stop-test">Stop Test</button>
+        </section>
+
+        <!-- TODO: Live Metrics Section -->
+        <section class="metrics-section">
+            <h2>Live Metrics</h2>
+            <div class="metrics-cards">
+                <div class="metric-card">
+                    <span class="metric-label">Users</span>
+                    <span class="metric-value" id="users">0</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">RPS</span>
+                    <span class="metric-value" id="rps">0</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">P99</span>
+                    <span class="metric-value" id="p99">0ms</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Errors</span>
+                    <span class="metric-value" id="errors">0%</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- TODO: Charts Section -->
+        <section class="charts-section">
+            <h2>Charts</h2>
+            <canvas id="rps-chart"></canvas>
+            <!-- TODO: Add chart.js or similar -->
+        </section>
+
+        <!-- TODO: History Table -->
+        <section class="history-section">
+            <h2>History</h2>
+            <table id="history-table">
+                <thead>
+                    <tr>
+                        <th>Step</th>
+                        <th>Users</th>
+                        <th>RPS</th>
+                        <th>P50</th>
+                        <th>P99</th>
+                        <th>Errors</th>
+                        <th>Decision</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- TODO: Populate from JS -->
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
