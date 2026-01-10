@@ -1,5 +1,5 @@
 from .base import IStrategy
-from ..models import AnalyzedMetrics, Decision
+from ..models import RawMetrics, Decision
 
 
 class TargetRPS(IStrategy):
@@ -32,7 +32,7 @@ class TargetRPS(IStrategy):
         self.step_multiplier = step_multiplier
         self.tolerance = tolerance
 
-    def decide(self, metrics: AnalyzedMetrics) -> Decision:
+    def decide(self, metrics: RawMetrics) -> Decision:
         """
         TODO: Реализовать логику принятия решения
 
@@ -41,9 +41,9 @@ class TargetRPS(IStrategy):
         2. degradation_index > 0.6 -> STOP (началась деградация)
         3. Иначе -> INCREASE
         """
-        return Decision.INCREASE
+        return Decision.CONTINUE
 
-    def get_next_users(self, current_users: int, metrics: AnalyzedMetrics) -> int:
+    def get_next_users(self, current_users: int, metrics: RawMetrics) -> int:
         """
         TODO: Вычислить следующее количество пользователей
 

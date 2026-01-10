@@ -1,0 +1,16 @@
+# Пример конфигурации для Load Orchestrator
+
+adapter:
+  type: locust
+  test_file: ./tests/load_tests/locustfile_demo.py
+  host: 0.0.0.0
+  port: 8092
+
+strategy:
+  type: canary
+  canary_users: 100
+  canary_duration: 30
+  error_threshold: 5
+
+orchestrator:
+  spawn_rate: 1000

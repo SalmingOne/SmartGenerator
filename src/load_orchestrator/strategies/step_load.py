@@ -1,5 +1,5 @@
 from .base import IStrategy
-from ..models import AnalyzedMetrics, Decision
+from ..models import RawMetrics, Decision
 
 
 class StepLoad(IStrategy):
@@ -37,7 +37,7 @@ class StepLoad(IStrategy):
         self._current_step = 0
         self._step_checks = 0
 
-    def decide(self, metrics: AnalyzedMetrics) -> Decision:
+    def decide(self, metrics: RawMetrics) -> Decision:
         """
         TODO: Реализовать логику принятия решения
 
@@ -48,9 +48,9 @@ class StepLoad(IStrategy):
         4. Если нестабильно -> STOP (деградация)
         5. Если достигли max_users -> STOP
         """
-        return Decision.INCREASE
+        return Decision.CONTINUE
 
-    def get_next_users(self, current_users: int, metrics: AnalyzedMetrics) -> int:
+    def get_next_users(self, current_users: int, metrics: RawMetrics) -> int:
         """
         TODO: Вычислить следующее количество пользователей
 
@@ -64,6 +64,15 @@ class StepLoad(IStrategy):
 
         next_users = current_users + self.step_size
         return min(next_users, self.max_users)
+
+    def get_wait_time(self) -> int:
+        """
+        StepLoad держит каждую ступень step_duration секунд
+
+        Returns:
+            step_duration из конфигурации
+        """
+        return self.step_duration
 
     def reset(self) -> None:
         """TODO: Сбросить внутреннее состояние"""

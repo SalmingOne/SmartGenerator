@@ -19,16 +19,20 @@ class LocustAdapter(IAdapter):
         self._process = subprocess.Popen([
             "locust",
             "-f", self.test_file,
-            "--port", str(self._port),
+            "--web-port", str(self._port),
         ])
 
     def is_ready(self):
-        r = self._session.get(self._host)
+        try:
+            r = self._session.get(self._host)
+        except:
+            return False
         return r.status_code == 200
 
 
     def configure(self, user_count, spawn_rate):
-        self._session.post(f"{self._host}/swarm", data=dict(user_count=user_count, spawn_rate=spawn_rate))
+        r = self._session.post(f"{self._host}/swarm", data=dict(user_count=user_count, spawn_rate=spawn_rate))
+        print(r.text)
 
     def stop(self):
         self._session.get(f"{self._host}/stop")
@@ -45,6 +49,7 @@ class LocustAdapter(IAdapter):
             timestamp=datetime.now().timestamp(),
             users=data.get("user_count", 0),
             rps=data.get("total_rps", 0),
+            rt_avg=aggregated.get("avg_response_time", 0),  # Среднее время ответа
             p50=aggregated.get("median_response_time", 0),
             p95=aggregated.get("response_time_percentile_0.95", 0),
             p99=aggregated.get("response_time_percentile_0.99", 0),
@@ -53,6 +58,3 @@ class LocustAdapter(IAdapter):
             failed_requests=aggregated.get("num_failures", 0)
         )
 
-
-
-print(LocustAdapter('f').get_stats())

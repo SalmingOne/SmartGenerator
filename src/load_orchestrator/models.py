@@ -3,7 +3,7 @@ from enum import Enum, auto
 
 
 class Decision(Enum):
-    INCREASE = auto()
+    CONTINUE = auto()
     HOLD = auto()
     STOP = auto()
 
@@ -30,21 +30,13 @@ class RawMetrics:
     timestamp: float
     users: int
     rps: float
+    rt_avg: float  # Среднее время ответа (ms) - для Locust-SDI
     p50: float
     p95: float
     p99: float
     failed_requests: int
     error_rate: float
     total_requests: int
-
-@dataclass
-class AnalyzedMetrics:
-    """Метрики после анализа"""
-    raw: RawMetrics
-    stability: float = 0.0            # P99/P50 — чем ближе к 1, тем стабильнее
-    scaling_efficiency: float = 0.0   # delta_rps / delta_users
-    degradation_index: float = 0.0    # Комплексный индекс (0 — норм, 1 — плохо)
-
 
 @dataclass
 class TestResult:
@@ -54,4 +46,21 @@ class TestResult:
     max_stable_users: int
     max_stable_rps: float
     stop_reason: StopReason
-    history: list[AnalyzedMetrics] = field(default_factory=list)
+    history: list[RawMetrics] = field(default_factory=list)
+
+
+class SpikePhase(Enum):
+    BASELINE = auto()      # Начальная нагрузка
+    SPIKE = auto()         # Резкий скачок
+    RECOVERY = auto()      # Восстановление
+    FINISHED = auto()
+
+
+@dataclass
+class SpikeConfig:
+    baseline_users: int = 50
+    baseline_duration: float = 30
+    spike_users: int = 500
+    spike_duration: float = 60
+    recovery_users: int = 50
+    recovery_duration: float = 30

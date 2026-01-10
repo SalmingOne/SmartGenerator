@@ -1,0 +1,17 @@
+
+adapter:
+  type: locust
+  test_file: ./tests/load_tests/locustfile_demo.py
+  host: 0.0.0.0
+  port: 8092
+
+strategy:
+  type: sla_validation
+  max_p99: 5000
+  max_error_rate: 10
+  initial_users: 1
+  step_multiplier: 10
+
+orchestrator:
+  spawn_rate: 10000
+  max_users: 100000

@@ -1,5 +1,5 @@
 from .base import IStrategy
-from ..models import AnalyzedMetrics, Decision
+from ..models import RawMetrics, Decision
 
 
 class BreakPoint(IStrategy):
@@ -9,7 +9,7 @@ class BreakPoint(IStrategy):
     TODO: Реализовать логику:
     - Агрессивно увеличивать нагрузку до полного отказа
     - Останавливаться когда:
-      * error_rate > 10% (система начала массово отказывать)
+      * error_rate > 10% (система начала масмсово отказывать)
       * RPS падает до 0 (система перестала отвечать)
       * P99 становится экстремально большим (> 10 секунд)
     """
@@ -29,20 +29,54 @@ class BreakPoint(IStrategy):
         self.initial_users = initial_users
         self.step_multiplier = step_multiplier
         self.error_threshold = error_threshold
+        self.previous_metrics: RawMetrics = RawMetrics(
+            timestamp=0,
+            users=0,
+            rps=0,
+            rt_avg=0,
+            p50=0,
+            p95=0,
+            p99=0,
+            failed_requests=0,
+            error_rate=0,
+            total_requests=0,
+        )
 
-    def decide(self, metrics: AnalyzedMetrics) -> Decision:
+    def decide(self, metrics: RawMetrics) -> Decision:
         """
-        TODO: Реализовать логику принятия решения
+        Принять решение о следующем шаге
 
-        Останавливаться если:
-        1. error_rate >= error_threshold -> STOP (система отказывает)
-        2. rps == 0 -> STOP (система не отвечает)
-        3. p99 > 10000 (10 сек) -> STOP (система зависла)
-        4. Иначе -> INCREASE (продолжаем давить)
+        Проверяет критические условия для поиска точки отказа:
+        - error_rate >= error_threshold
+        - RPS == 0 (система не отвечает)
+        - P99 > 10 секунд (экстремальная латентность)
+        - Падение RPS на 50% (требует previous_metrics)
         """
-        return Decision.INCREASE
+        # Проверка критического уровня ошибок
+        if metrics.error_rate >= self.error_threshold:
+            print(f"⚠️  Critical error rate: {metrics.error_rate:.2f}%")
+            return Decision.STOP
 
-    def get_next_users(self, current_users: int, metrics: AnalyzedMetrics) -> int:
+        # Система перестала отвечать
+        if metrics.rps == 0 and metrics.users > 0:
+            print("⚠️  System stopped responding")
+            return Decision.STOP
+
+        # Экстремальная латентность
+        if metrics.p99 > 10000:  # 10 секунд
+            print(f"⚠️  Extreme latency: {metrics.p99:.0f}ms")
+            return Decision.STOP
+
+        # Проверка падения RPS (требует previous_metrics)
+        if self.previous_metrics.rps > 0 and metrics.rps < self.previous_metrics.rps * 0.5:
+            print(f"⚠️  RPS dropped by 50%: {self.previous_metrics.rps:.1f} → {metrics.rps:.1f}")
+            self.previous_metrics = metrics
+            return Decision.STOP
+
+        self.previous_metrics = metrics
+        return Decision.CONTINUE
+
+    def get_next_users(self, current_users: int, metrics: RawMetrics) -> int:
         """
         TODO: Вычислить следующее количество пользователей
 

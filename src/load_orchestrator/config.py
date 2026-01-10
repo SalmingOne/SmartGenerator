@@ -24,9 +24,9 @@ class StrategyConfig:
 @dataclass
 class OrchestratorConfig:
     """Конфигурация оркестратора"""
-    stabilization_time: int = 30
-    window_size: int = 5
+    spawn_rate: int = 10
     max_users: int | None = None
+    monitoring_interval: int = 5  # Интервал сбора метрик в секундах
 
 
 @dataclass
@@ -101,9 +101,9 @@ class Config:
         # Парсинг orchestrator (опциональный)
         orchestrator_data = data.get('orchestrator', {})
         orchestrator = OrchestratorConfig(
-            stabilization_time=orchestrator_data.get('stabilization_time', 30),
-            window_size=orchestrator_data.get('window_size', 5),
-            max_users=orchestrator_data.get('max_users')
+            spawn_rate=orchestrator_data.get('spawn_rate', 10),
+            max_users=orchestrator_data.get('max_users'),
+            monitoring_interval=orchestrator_data.get('monitoring_interval', 5)
         )
 
         return cls(
@@ -131,9 +131,9 @@ class Config:
                 **(self.strategy.params or {})
             },
             'orchestrator': {
-                'stabilization_time': self.orchestrator.stabilization_time,
-                'window_size': self.orchestrator.window_size,
-                'max_users': self.orchestrator.max_users
+                'spawn_rate': self.orchestrator.spawn_rate,
+                'max_users': self.orchestrator.max_users,
+                'monitoring_interval': self.orchestrator.monitoring_interval
             }
         }
 

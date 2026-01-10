@@ -1,5 +1,5 @@
 from .base import IStrategy
-from ..models import AnalyzedMetrics, Decision
+from ..models import RawMetrics, Decision, SpikePhase, SpikeConfig
 
 
 class Spike(IStrategy):
@@ -17,58 +17,105 @@ class Spike(IStrategy):
 
     def __init__(
         self,
-        spike_users: int,
-        spike_duration: int = 60,  # секунд
-        baseline_users: int = 10,
-        check_recovery: bool = True,
+        config: SpikeConfig,
     ):
-        """
-        Args:
-            spike_users: Количество пользователей для скачка
-            spike_duration: Длительность скачка (секунд)
-            baseline_users: Базовая нагрузка (для проверки восстановления)
-            check_recovery: Проверять ли восстановление после скачка
-        """
-        self.spike_users = spike_users
-        self.spike_duration = spike_duration
-        self.baseline_users = baseline_users
-        self.check_recovery = check_recovery
+        self.config = config
+        self._phase: SpikePhase = SpikePhase.BASELINE # baseline -> spike -> recovery
+        self.phase_start_time = None
 
-        self._phase = "baseline"  # baseline -> spike -> recovery
-        self._spike_steps = 0
+        self.baseline_metrics: RawMetrics | None = None
+        self.spike_metrics: list[RawMetrics] = []
+        self.recovery_metrics: list[RawMetrics] = []
 
-    def decide(self, metrics: AnalyzedMetrics) -> Decision:
-        """
-        TODO: Реализовать логику принятия решения
+    def decide(self, metrics: RawMetrics, ) -> Decision:
 
-        Фазы:
-        1. baseline: Установить базовую нагрузку -> переход в spike
-        2. spike: Держать spike_users в течение spike_duration -> переход в recovery
-        3. recovery: Вернуться к baseline, проверить восстановление -> STOP
+        now = metrics.timestamp
 
-        Останавливаться если:
-        - Система отказала во время spike (error_rate > 50%)
-        - Прошли все фазы
-        """
-        return Decision.INCREASE
+        # Инициализация времени фазы
+        if self.phase_start_time is None:
+            self.phase_start_time = now
 
-    def get_next_users(self, current_users: int, metrics: AnalyzedMetrics) -> int:
-        """
-        TODO: Вычислить следующее количество пользователей
+        elapsed = now - self.phase_start_time
 
-        В зависимости от фазы:
-        - baseline: baseline_users
-        - spike: spike_users
-        - recovery: baseline_users
-        """
-        if self._phase == "baseline":
-            return self.baseline_users
-        elif self._phase == "spike":
-            return self.spike_users
+        match self._phase:
+            case SpikePhase.SPIKE:
+                return self._handle_spike(metrics, elapsed)
+            case SpikePhase.BASELINE:
+                return self._handle_baseline(metrics, elapsed)
+            case SpikePhase.RECOVERY:
+                return self._handle_recovery(metrics, elapsed)
+
+
+        return Decision.CONTINUE
+
+    def _handle_spike(self, metrics: RawMetrics, elapsed: float) -> Decision:
+        """Фаза spike — держим пиковую нагрузку"""
+
+        self.spike_metrics.append(metrics)
+
+        # Проверяем не сломалась ли система полностью
+        if metrics.error_rate > 50:  # 50% ошибок — система мертва
+            self._phase = SpikePhase.RECOVERY
+            self.phase_start_time = metrics.timestamp  # Сброс времени для новой фазы
+            return Decision.CONTINUE  # На самом деле уменьшим (см. get_next_users)
+
+        if metrics.rps == 0:
+            return Decision.STOP
+
+        if elapsed >= self.config.spike_duration:
+            self._phase = SpikePhase.RECOVERY
+            self.phase_start_time = metrics.timestamp  # Сброс времени для новой фазы
+            print("Сброс активности")
+            return Decision.CONTINUE  # Сигнал на изменение (уменьшение)
+
+        return Decision.HOLD
+
+    def _handle_recovery(self, metrics: RawMetrics, elapsed: float) -> Decision:
+        """Фаза recovery — проверяем восстановление"""
+
+        self.recovery_metrics.append(metrics)
+
+        if elapsed >= self.config.recovery_duration:
+            self._phase = SpikePhase.FINISHED
+            print("Тест закончен")
+            return Decision.STOP
+
+        return Decision.HOLD
+
+    def _handle_baseline(self, metrics: RawMetrics, elapsed: float) -> Decision:
+        """Фаза baseline — держим начальную нагрузку"""
+
+        if elapsed >= self.config.baseline_duration:
+            # Запоминаем baseline для сравнения
+            self.baseline_metrics = metrics
+
+            # Переходим к спайку
+            self._phase = SpikePhase.SPIKE
+            self.phase_start_time = metrics.timestamp  # Сброс времени для новой фазы
+            print("Резкий скачок")
+            return Decision.CONTINUE  # Сигнал на резкое увеличение
+
+        return Decision.HOLD
+
+
+    def get_next_users(self, current_users: int, metrics: RawMetrics) -> int:
+        if self._phase == SpikePhase.BASELINE:
+            return self.config.baseline_users
+        elif self._phase == SpikePhase.SPIKE:
+            return self.config.spike_users
         else:  # recovery
-            return self.baseline_users
+            return self.config.recovery_users
+
+    def get_wait_time(self) -> int:
+        """
+        Spike проверяет метрики часто для отслеживания фаз
+
+        Returns:
+            1 секунда (фазы контролируются через timestamp в decide)
+        """
+        return 1
 
     def reset(self) -> None:
         """TODO: Сбросить внутреннее состояние"""
-        self._phase = "baseline"
+        self._phase = SpikePhase.SPIKE
         self._spike_steps = 0

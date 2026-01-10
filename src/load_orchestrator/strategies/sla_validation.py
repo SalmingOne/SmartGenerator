@@ -1,5 +1,5 @@
 from .base import IStrategy
-from ..models import AnalyzedMetrics, Decision
+from ..models import RawMetrics, Decision
 
 
 class SLAValidation(IStrategy):
@@ -20,7 +20,6 @@ class SLAValidation(IStrategy):
         self,
         max_p99: float,  # в миллисекундах
         max_error_rate: float,  # в процентах
-        max_users: int,
         initial_users: int = 10,
         step_multiplier: float = 1.5,
     ):
@@ -34,23 +33,31 @@ class SLAValidation(IStrategy):
         """
         self.max_p99 = max_p99
         self.max_error_rate = max_error_rate
-        self.max_users = max_users
         self.initial_users = initial_users
         self.step_multiplier = step_multiplier
 
-    def decide(self, metrics: AnalyzedMetrics) -> Decision:
+    def decide(self, metrics: RawMetrics) -> Decision:
         """
-        TODO: Реализовать логику принятия решения
+        Принять решение о следующем шаге
 
-        Проверять SLA:
-        1. Если p99 > max_p99 -> STOP (нарушили SLA по latency)
-        2. Если error_rate > max_error_rate -> STOP (нарушили SLA по ошибкам)
-        3. Если users >= max_users -> STOP (достигли лимита, SLA OK)
-        4. Иначе -> INCREASE (продолжаем проверку)
+        Проверяет соответствие SLA:
+        - P99 превышает лимит
+        - Error rate превышает лимит
+        - Достигнут max_users (успешная валидация)
         """
-        return Decision.INCREASE
+        # Проверка нарушения P99
+        if metrics.p99 > self.max_p99:
+            print(f"⚠️  SLA violation: P99={metrics.p99:.0f}ms > {self.max_p99}ms")
+            return Decision.STOP
 
-    def get_next_users(self, current_users: int, metrics: AnalyzedMetrics) -> int:
+        # Проверка нарушения error rate
+        if metrics.error_rate > self.max_error_rate:
+            print(f"⚠️  SLA violation: error_rate={metrics.error_rate:.2f}% > {self.max_error_rate}%")
+            return Decision.STOP
+
+        return Decision.CONTINUE
+
+    def get_next_users(self, current_users: int, metrics: RawMetrics) -> int:
         """
         TODO: Вычислить следующее количество пользователей
 
@@ -60,7 +67,7 @@ class SLAValidation(IStrategy):
             return self.initial_users
 
         next_users = int(current_users * self.step_multiplier)
-        return min(next_users, self.max_users)
+        return next_users
 
     def reset(self) -> None:
         """TODO: Сбросить внутреннее состояние"""

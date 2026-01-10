@@ -1,0 +1,20 @@
+adapter:
+  type: locust
+  test_file: ./tests/load_tests/locustfile_demo.py
+  host: 0.0.0.0
+  port: 8092
+
+strategy:
+  type: spike
+  # Базовая нагрузка перед спайком
+  baseline_users: 5
+  baseline_duration: 30     # секунд
+  # Спайк
+  spike_users: 10000      # резко до 500
+  spike_duration: 60        # держим 60 секунд
+  # Восстановление
+  recovery_users: 5       # возвращаемся к 50
+  recovery_duration: 30     # ждём 30 секунд
+
+orchestrator:
+  spawn_rate: 100
