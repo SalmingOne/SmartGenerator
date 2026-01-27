@@ -51,8 +51,8 @@ class Config:
             FileNotFoundError: Если файл не найден
             ValueError: Если конфигурация невалидна
         """
-        path = Path(path)
-
+        path = Path(path).resolve()
+        print(path)
         if not path.exists():
             raise FileNotFoundError(f"Config file not found: {path}")
 
@@ -72,7 +72,7 @@ class Config:
         if 'test_file' not in adapter_data:
             raise ValueError("Missing 'test_file' in adapter config")
 
-        test_file_path = Path(adapter_data['test_file'])
+        test_file_path = Path(adapter_data['test_file']).resolve()
         if not test_file_path.exists():
             raise ValueError(f"Test file not found: {test_file_path}")
 

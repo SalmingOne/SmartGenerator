@@ -9,7 +9,7 @@ Factory для создания Orchestrator из конфига
 
 from .config import Config
 from .orchestrator import Orchestrator
-from .interfaces.IAdapter import IAdapter
+from .adapters.IAdapter import IAdapter
 from .strategies.base import IStrategy
 
 # Импорт адаптеров
@@ -20,7 +20,6 @@ from .strategies.degradation_search import DegradationSearch
 from .strategies.break_point import BreakPoint
 from .strategies.sla_validation import SLAValidation
 from .strategies.target_rps import TargetRPS
-from .strategies.step_load import StepLoad
 from .strategies.spike import Spike
 from .strategies.canary import Canary
 from .models import SpikeConfig
@@ -42,7 +41,6 @@ class OrchestratorFactory:
         'break_point': BreakPoint,
         'sla_validation': SLAValidation,
         'target_rps': TargetRPS,
-        'step_load': StepLoad,
         'spike': Spike,
         'canary': Canary,
     }

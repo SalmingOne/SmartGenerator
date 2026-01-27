@@ -3,7 +3,7 @@ from datetime import datetime
 
 from .models import State, StopReason, TestResult, RawMetrics, Decision
 from .config import Config
-from .interfaces.IAdapter import IAdapter
+from .adapters.IAdapter import IAdapter
 from .strategies.base import IStrategy
 
 
@@ -59,7 +59,7 @@ class Orchestrator:
         # Получить начальное количество пользователей из стратегии
         self._configure_initial_load()
 
-        time.sleep(10) # стабилизация
+        time.sleep(20) # стабилизация
 
         self.state = State.RUNNING
 

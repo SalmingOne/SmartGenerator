@@ -4,7 +4,6 @@ from .break_point import BreakPoint
 from .target_rps import TargetRPS
 from .sla_validation import SLAValidation
 from .spike import Spike
-from .step_load import StepLoad
 from .canary import Canary
 
 __all__ = [
@@ -14,6 +13,5 @@ __all__ = [
     'TargetRPS',
     'SLAValidation',
     'Spike',
-    'StepLoad',
     'Canary',
 ]

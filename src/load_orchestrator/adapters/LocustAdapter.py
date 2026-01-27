@@ -1,9 +1,9 @@
 import subprocess
 from datetime import datetime
 
-from src.load_orchestrator.interfaces.IAdapter import IAdapter
+from ..adapters.IAdapter import IAdapter
 import requests as rq
-from src.load_orchestrator.models import RawMetrics
+from ..models import RawMetrics
 
 class LocustAdapter(IAdapter):
 

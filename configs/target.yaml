@@ -1,0 +1,14 @@
+adapter:
+  type: locust
+  test_file: ./tests/load_tests/locustfile_demo.py
+  host: 0.0.0.0
+  port: 8092
+
+strategy:
+  type: target_rps
+  target_rps: 500
+  test_duration: 180
+  tolerance: 0.05
+
+orchestrator:
+  spawn_rate: 1000
