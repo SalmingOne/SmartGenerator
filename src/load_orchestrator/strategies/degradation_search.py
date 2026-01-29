@@ -93,26 +93,32 @@ class DegradationSearch(IStrategy):
         self.metrics_history.append(metrics)
 
         # Минимум данных
-        if len(self.metrics_history) < 10:
+        if len(self.metrics_history) < 15:
             return Decision.CONTINUE
 
         # Берём только p95
         p95 = [m.p95 for m in self.metrics_history]
+        errors = [m.error_rate for m in self.metrics_history]
 
-        BASELINE_WINDOW = 8
+        BASELINE_WINDOW = 10
         CHECK_WINDOW = 3
-        MULTIPLIER = 1.5  # во сколько раз p95 должен вырасти
+        MULTIPLIER = 1.5
 
         # baseline — медиана стабильного участка
-        baseline_slice = p95[-(BASELINE_WINDOW + CHECK_WINDOW):-CHECK_WINDOW]
-        baseline = statistics.median(baseline_slice)
+        baseline_slice_p95 = p95[-(BASELINE_WINDOW + CHECK_WINDOW):-CHECK_WINDOW]
+        baseline_slice_error_rate = errors[-(BASELINE_WINDOW + CHECK_WINDOW):-CHECK_WINDOW]
+        baseline_p95 = statistics.median(baseline_slice_p95)
+        baseline_error_rate = statistics.median(baseline_slice_error_rate)
 
         # последние значения
-        recent = p95[-CHECK_WINDOW:]
+        recent_p95 = p95[-CHECK_WINDOW:]
+        recent_error_rate = errors[-CHECK_WINDOW:]
 
         # условие деградации:
         # все последние значения сильно выше baseline
-        if all(v > baseline * MULTIPLIER for v in recent):
+        print(recent_p95, baseline_p95)
+        print(recent_error_rate, baseline_error_rate)
+        if all(v > baseline_p95 * MULTIPLIER for v in recent_p95) or all(v > baseline_error_rate * MULTIPLIER for v in recent_error_rate) :
             return Decision.STOP
 
         return Decision.CONTINUE
