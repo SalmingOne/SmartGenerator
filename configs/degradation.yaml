@@ -1,5 +1,3 @@
-# Пример конфигурации для Load Orchestrator
-
 adapter:
   type: locust
   test_file: ./tests/load_tests/locustfile_demo.py

@@ -1,9 +1,9 @@
 import time
 from datetime import datetime
 
-from .models import State, StopReason, TestResult, RawMetrics, Decision
-from .config import Config
 from .adapters.IAdapter import IAdapter
+from .config import Config
+from .models import Decision, RawMetrics, State, StopReason, TestResult
 from .strategies.base import IStrategy
 
 
@@ -43,7 +43,7 @@ class Orchestrator:
             self._running_phase()
         except Exception as e:
             self.stop_reason = StopReason.ERROR
-            raise
+            raise e
         finally:
             return self._finished_phase()
 
@@ -59,7 +59,7 @@ class Orchestrator:
         # Получить начальное количество пользователей из стратегии
         self._configure_initial_load()
 
-        time.sleep(20) # стабилизация
+        time.sleep(20)  # стабилизация
 
         self.state = State.RUNNING
 
@@ -85,7 +85,7 @@ class Orchestrator:
             p99=0.0,
             failed_requests=0,
             error_rate=0.0,
-            total_requests=0
+            total_requests=0,
         )
 
         # Получить начальное количество пользователей из стратегии
@@ -93,11 +93,8 @@ class Orchestrator:
 
         # Настроить генератор
         self.adapter.configure(
-            user_count=self.current_users,
-            spawn_rate=self.current_users
+            user_count=self.current_users, spawn_rate=self.current_users
         )
-
-
 
     def _running_phase(self) -> None:
         """
@@ -135,10 +132,12 @@ class Orchestrator:
 
                 # Изменять нагрузку только если пришло время и решение CONTINUE
                 if decision == Decision.CONTINUE and now >= next_change_time:
-                    next_users = self.strategy.get_next_users(self.current_users, metrics)
+                    next_users = self.strategy.get_next_users(
+                        self.current_users, metrics
+                    )
                     self.adapter.configure(
                         user_count=next_users,
-                        spawn_rate=self.config.orchestrator.spawn_rate
+                        spawn_rate=self.config.orchestrator.spawn_rate,
                     )
                     self.current_users = next_users
                     next_change_time = now + self.strategy.get_wait_time()
@@ -204,7 +203,7 @@ class Orchestrator:
             max_stable_users=max_stable_users,
             max_stable_rps=max_stable_rps,
             stop_reason=self.stop_reason,
-            history=self.history
+            history=self.history,
         )
 
     def stop(self) -> None:

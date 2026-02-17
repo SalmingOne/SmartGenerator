@@ -11,18 +11,11 @@ dependencies = [
     "requests>=2.31.0",
     "pyyaml>=6.0",
     "click>=8.1.0",
+    "textual>=0.80.0",
+    "textual-plotext>=0.2.0",
 ]
 
 [project.optional-dependencies]
-web = [
-    "fastapi>=0.109.0",
-    "uvicorn>=0.27.0",
-    "websockets>=12.0",
-]
-dev = [
-    "pytest>=8.0.0",
-    "ruff>=0.1.0",
-]
-
 [project.scripts]
 load-orchestrator = "load_orchestrator.cli:main"
+load-orchestrator-tui = "load_orchestrator.tui.app:run"

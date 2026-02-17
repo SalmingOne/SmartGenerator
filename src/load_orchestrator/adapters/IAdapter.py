@@ -1,6 +1,8 @@
 import subprocess
 from abc import ABC, abstractmethod
 
+from load_orchestrator.models import RawMetrics
+
 
 class IAdapter(ABC):
     """Abstract interface for adapters."""
@@ -27,14 +29,14 @@ class IAdapter(ABC):
         pass
 
     @abstractmethod
-    def get_stats(self):
+    def get_stats(self) -> RawMetrics:
         """Получение статистики по метрикам"""
         pass
 
     @abstractmethod
-    def configure(self, **kwargs):
+    def configure(self, **kwargs) -> None:
         """Начало или редактирование нагрузки"""
 
     @abstractmethod
-    def is_ready(self):
+    def is_ready(self) -> bool:
         pass

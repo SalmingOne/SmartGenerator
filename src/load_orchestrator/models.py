@@ -1,11 +1,13 @@
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from typing import Optional
 
 
 class Decision(Enum):
     CONTINUE = auto()
     HOLD = auto()
     STOP = auto()
+
 
 class State(Enum):
     INIT = auto()
@@ -15,14 +17,15 @@ class State(Enum):
 
 class StopReason(Enum):
     """Причины остановки"""
-    DEGRADATION = auto()     # Найдена деградация
-    BREAK_POINT = auto()     # Система сломалась
+
+    DEGRADATION = auto()  # Найдена деградация
+    BREAK_POINT = auto()  # Система сломалась
     TARGET_REACHED = auto()  # Цель достигнута
-    SLA_VIOLATED = auto()    # SLA нарушен
-    MAX_USERS = auto()       # Достигнут лимит юзеров
-    TIMEOUT = auto()         # Таймаут теста
-    MANUAL = auto()          # Ручная остановка
-    ERROR = auto()           # Ошибка
+    SLA_VIOLATED = auto()  # SLA нарушен
+    MAX_USERS = auto()  # Достигнут лимит юзеров
+    TIMEOUT = auto()  # Таймаут теста
+    MANUAL = auto()  # Ручная остановка
+    ERROR = auto()  # Ошибка
 
 
 @dataclass
@@ -38,10 +41,12 @@ class RawMetrics:
     error_rate: float
     total_requests: int
 
+
 @dataclass
 class TestResult:
     """Результат теста"""
-    started_at: float
+
+    started_at: Optional[float]
     finished_at: float | None
     max_stable_users: int
     max_stable_rps: float
@@ -50,9 +55,9 @@ class TestResult:
 
 
 class SpikePhase(Enum):
-    BASELINE = auto()      # Начальная нагрузка
-    SPIKE = auto()         # Резкий скачок
-    RECOVERY = auto()      # Восстановление
+    BASELINE = auto()  # Начальная нагрузка
+    SPIKE = auto()  # Резкий скачок
+    RECOVERY = auto()  # Восстановление
     FINISHED = auto()
 
 

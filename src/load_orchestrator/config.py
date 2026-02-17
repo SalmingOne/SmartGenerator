@@ -145,7 +145,9 @@ class Config:
             path: Путь к YAML файлу
         """
         path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-        with open(path, 'w', encoding='utf-8') as f:
-            yaml.dump(self.to_dict(), f, default_flow_style=False, allow_unicode=True)
+        if path.suffix == '.yaml' or path.suffix == '.yml':
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, 'w', encoding='utf-8') as f:
+                yaml.dump(self.to_dict(), f, default_flow_style=False, allow_unicode=True)
+        else:
+            raise NotImplementedError(f'Not support file type: {path.suffix}')
