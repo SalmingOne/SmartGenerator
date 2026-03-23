@@ -1,0 +1,161 @@
+Screen {
+    layout: vertical;
+    overflow-y: auto;
+}
+
+/* Header bar */
+#header-bar {
+    layout: horizontal;
+    height: 3;
+    dock: top;
+    background: $primary-background;
+    padding: 0 1;
+}
+
+#header-bar Button {
+    margin: 0 1;
+}
+
+/* Config screen */
+.config-section {
+    border: solid $accent;
+    padding: 1 2;
+    margin: 1 2;
+    height: auto;
+}
+
+.config-section .section-title {
+    text-style: bold;
+    color: $text;
+    margin-bottom: 1;
+}
+
+.form-group {
+    layout: horizontal;
+    height: 3;
+    margin: 0 0;
+}
+
+.form-group Label {
+    width: 28;
+    content-align: right middle;
+    padding: 0 1 0 0;
+}
+
+.form-group Input {
+    width: 1fr;
+}
+
+.form-group Select {
+    width: 1fr;
+}
+
+.browse-btn {
+    width: 12;
+    min-width: 12;
+}
+
+#button-bar {
+    layout: horizontal;
+    height: 3;
+    dock: bottom;
+    align: center middle;
+    padding: 0 1;
+    background: $panel;
+}
+
+#button-bar Button {
+    margin: 0 1;
+}
+
+/* Strategy form */
+StrategyForm {
+    height: auto;
+    padding: 0;
+}
+
+StrategyForm .section-title {
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 1;
+}
+
+StrategyForm Label {
+    margin: 0 0 0 2;
+}
+
+StrategyForm Input {
+    margin: 0 2 1 2;
+}
+
+/* Run screen */
+#status-bar {
+    layout: horizontal;
+    height: 3;
+    background: $primary-background;
+    padding: 0 2;
+    dock: top;
+}
+
+#status-bar Static {
+    width: 1fr;
+    content-align: center middle;
+}
+
+#metrics-bar {
+    layout: horizontal;
+    height: 5;
+    padding: 0 1;
+}
+
+.metric-card {
+    width: 1fr;
+    height: 5;
+    border: round $accent;
+    content-align: center middle;
+    margin: 0 1;
+}
+
+.metric-card .metric-value {
+    text-style: bold;
+    text-align: center;
+}
+
+.metric-card .metric-label {
+    text-align: center;
+    color: $text-muted;
+}
+
+#log-panel {
+    height: 1fr;
+    margin: 1 2;
+    border: solid $secondary;
+}
+
+#run-button-bar {
+    layout: horizontal;
+    height: 3;
+    dock: bottom;
+    align: center middle;
+    padding: 0 1;
+    background: $panel;
+}
+
+#run-button-bar Button {
+    margin: 0 1;
+}
+
+/* Metrics screen */
+#metrics-tabs {
+    height: 1fr;
+}
+
+PlotextPlot {
+    height: 1fr;
+    min-height: 15;
+}
+
+/* Footer */
+Footer {
+    dock: bottom;
+}
