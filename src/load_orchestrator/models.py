@@ -7,6 +7,7 @@ class Decision(Enum):
     CONTINUE = auto()
     HOLD = auto()
     STOP = auto()
+    FINISHED = auto()
 
 
 class State(Enum):

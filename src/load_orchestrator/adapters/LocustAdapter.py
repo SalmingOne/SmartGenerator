@@ -1,4 +1,5 @@
 import subprocess
+import threading
 from datetime import datetime
 
 import requests as rq
@@ -18,6 +19,7 @@ class LocustAdapter(IAdapter):
         self._port = port
         self._session = rq.Session()
         self._host = f"http://{host}:{self._port}"
+        self.log_file = 'logs.txt'
 
     def launch(self):
         self._process = subprocess.Popen(
@@ -27,14 +29,20 @@ class LocustAdapter(IAdapter):
                 self.test_file,
                 "--web-port",
                 str(self._port),
-            ]
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL,
+            close_fds=True,
+            # Запускаем в новой сессии — отрывает от controlling terminal
+            start_new_session=True,
         )
-
     def is_ready(self):
         try:
             r = self._session.get(self._host)
         except:
-            raise
+            print(f"⚠️ Locust не отвечает на {self._host}")
+            return
         return r.status_code == 200
 
     def configure(self, **kwargs):

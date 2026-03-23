@@ -59,7 +59,7 @@ class Orchestrator:
         # Получить начальное количество пользователей из стратегии
         self._configure_initial_load()
 
-        time.sleep(20)  # стабилизация
+        time.sleep(30)  # стабилизация
 
         self.state = State.RUNNING
 
@@ -116,11 +116,6 @@ class Orchestrator:
                 metrics = self.adapter.get_stats()
                 self.history.append(metrics)
 
-                # Проверяем критические условия оркестратора
-                if self._check_critical_conditions(metrics):
-                    self.state = State.FINISHED
-                    self.stop_reason = StopReason.DEGRADATION
-                    break
 
                 # Стратегия принимает решение ПРИ КАЖДОМ мониторинге
                 decision = self.strategy.decide(metrics)
@@ -135,6 +130,7 @@ class Orchestrator:
                     next_users = self.strategy.get_next_users(
                         self.current_users, metrics
                     )
+                    print(next_users)
                     self.adapter.configure(
                         user_count=next_users,
                         spawn_rate=self.config.orchestrator.spawn_rate,
@@ -142,7 +138,6 @@ class Orchestrator:
                     self.current_users = next_users
                     next_change_time = now + self.strategy.get_wait_time()
 
-                # HOLD - просто не меняем нагрузку
 
                 next_monitor_time = now + self.config.orchestrator.monitoring_interval
 

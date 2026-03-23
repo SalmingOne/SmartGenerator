@@ -9,19 +9,6 @@ import statistics
 
 class DegradationSearch(IStrategy):
     """
-    Стратегия поиска точки деградации системы на основе Locust-SDI
-
-    Использует академический индекс деградации системы (Locust-SDI),
-    который учитывает:
-    - Амплитудную деградацию (отклонение от нормы)
-    - Трендовую деградацию (наклон кривых)
-    - Нестабильность (спайки на графиках)
-
-    Интерпретация Locust-SDI:
-    - 0.0-0.3: стабильная работа
-    - 0.3-0.5: начало деградации
-    - 0.5-0.7: серьёзная деградация
-    - >0.7: критическое состояние
     """
 
     def __init__(
@@ -33,18 +20,6 @@ class DegradationSearch(IStrategy):
         threshold_count: int = 3,  # Сколько проверок из window_size должны превысить порог
     ):
         """
-        Args:
-            initial_users: Начальное количество пользователей
-            step_multiplier: Множитель для экспоненциального роста (например, 1.5 = +50%)
-            step_size: Фиксированный шаг для линейного роста (например, +50 users)
-            degradation_threshold: Порог Locust-SDI для остановки
-            window_size: Размер скользящего окна для проверки
-            threshold_count: Сколько проверок должны превысить порог
-            ref_metrics: Эталонные метрики для расчета Locust-SDI
-
-        Note:
-            Если задан step_size, используется линейный рост (StepLoad режим).
-            Если step_size=None, используется step_multiplier (экспоненциальный рост).
         """
         self.initial_users = initial_users
         self.step_multiplier = step_multiplier
@@ -65,35 +40,11 @@ class DegradationSearch(IStrategy):
         self.violation_window: deque[bool] = deque(maxlen=window_size)
 
 
-    # previous_growth = 0
-    #
-    #     for i in range(1, len(p95_history)):
-    #         current_val = p95_history[i]
-    #         prev_val = p95_history[i-1]
-    #
-    #         # Текущий прирост времени отклика
-    #         current_growth = current_val - prev_val
-    #
-    #         # Логика детекции перегиба (Inflection Point):
-    #         # Вариант А: Резкое превышение базового уровня в N раз [5]
-    #         if current_val > baseline * 2: # "Разумный порог" по Алексею Рагозину
-    #              return f"Точка деградации найдена: p95 ({current_val}мс) превысил baseline в 2 раза"
-    #
-    #         # Вариант Б: Математический - резкое ускорение роста (производная)
-    #         # Если текущий скачок в 3 раза (sensitivity) больше предыдущего [6]
-    #         if i > 2 and current_growth > previous_growth * sensitivity:
-    #             return f"Точка деградации найдена: резкое ускорение роста на шаге {i}"
-    #
-    #         previous_growth = current_growth
-    #
-    #     return "Точка деградации не обнаружена: система остается в зеленой зоне"
-    import statistics
-
     def decide(self, metrics: RawMetrics) -> Decision:
         self.metrics_history.append(metrics)
 
         # Минимум данных
-        if len(self.metrics_history) < 15:
+        if len(self.metrics_history) < 5:
             return Decision.CONTINUE
 
         # Берём только p95
@@ -115,9 +66,6 @@ class DegradationSearch(IStrategy):
         recent_error_rate = errors[-CHECK_WINDOW:]
 
         # условие деградации:
-        # все последние значения сильно выше baseline
-        print(recent_p95, baseline_p95)
-        print(recent_error_rate, baseline_error_rate)
         if all(v > baseline_p95 * MULTIPLIER for v in recent_p95) or all(v > baseline_error_rate * MULTIPLIER for v in recent_error_rate) :
             return Decision.STOP
 
@@ -131,7 +79,7 @@ class DegradationSearch(IStrategy):
         1. Линейный рост (step_size): users + step_size
         2. Экспоненциальный рост (step_multiplier): users * step_multiplier
         """
-        return current_users + 10
+        return int(current_users * self.step_multiplier) + 1
 
     def get_wait_time(self) -> int:
         return 5

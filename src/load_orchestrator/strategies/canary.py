@@ -22,6 +22,7 @@ class Canary(IStrategy):
         canary_users: int = 5,
         canary_duration: int = 30,  # секунд
         error_threshold: float = 1.0,  # 1% ошибок уже плохо для canary
+        percentile_threshold: float = 5000
     ):
         """
         Args:
@@ -32,6 +33,7 @@ class Canary(IStrategy):
         self.canary_users = canary_users
         self.canary_duration = canary_duration
         self.error_threshold = error_threshold
+        self.percentile_threshold = percentile_threshold
 
         self._checks_done = 0
         self._started_at = None
@@ -54,7 +56,7 @@ class Canary(IStrategy):
 
         if metrics.error_rate > self.error_threshold:
             return Decision.STOP
-        if metrics.p99 > self.error_threshold:
+        if metrics.p99 > self.percentile_threshold:
             return Decision.STOP
 
         if time.time() - self._started_at > self.canary_duration:

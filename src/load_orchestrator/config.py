@@ -26,7 +26,7 @@ class OrchestratorConfig:
     """Конфигурация оркестратора"""
     spawn_rate: int = 10
     max_users: int | None = None
-    monitoring_interval: int = 5  # Интервал сбора метрик в секундах
+    monitoring_interval: int = 5
 
 
 @dataclass
