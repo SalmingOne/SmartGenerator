@@ -8,7 +8,6 @@ class Canary(IStrategy):
     """
     Стратегия быстрой проверки (Canary/Smoke Test)
 
-    TODO: Реализовать логику:
     - Быстро проверить что система вообще работает
     - Минимальная нагрузка (canary_users)
     - Короткий тест (canary_duration секунд)
@@ -22,7 +21,7 @@ class Canary(IStrategy):
         canary_users: int = 5,
         canary_duration: int = 30,  # секунд
         error_threshold: float = 1.0,  # 1% ошибок уже плохо для canary
-        percentile_threshold: float = 5000
+        percentile_threshold: float = 500
     ):
         """
         Args:

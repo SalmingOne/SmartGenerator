@@ -3,7 +3,7 @@ import sys
 
 from textual.app import App
 
-from ..config import Config
+from ..configuration import Config
 from ..models import TestResult
 from ..orchestrator import Orchestrator
 from .screens.config_screen import ConfigScreen

@@ -6,7 +6,6 @@ class BreakPoint(IStrategy):
     """
     Стратегия поиска точки отказа системы
 
-    TODO: Реализовать логику:
     - Агрессивно увеличивать нагрузку до полного отказа
     - Останавливаться когда:
       * error_rate > 10% (система начала масмсово отказывать)
@@ -77,15 +76,9 @@ class BreakPoint(IStrategy):
         return Decision.CONTINUE
 
     def get_next_users(self, current_users: int, metrics: RawMetrics) -> int:
-        """
-        TODO: Вычислить следующее количество пользователей
-
-        Логика: агрессивное увеличение (например, x2 каждый раз)
-        """
         if current_users == 0:
             return self.initial_users
         return int(current_users * self.step_multiplier)
 
     def reset(self) -> None:
-        """TODO: Сбросить внутреннее состояние"""
-        pass
+        self.previous_metrics = None

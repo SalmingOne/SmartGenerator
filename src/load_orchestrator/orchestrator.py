@@ -2,7 +2,7 @@ import time
 from datetime import datetime
 
 from .adapters.IAdapter import IAdapter
-from .config import Config
+from .configuration import Config
 from .models import Decision, RawMetrics, State, StopReason, TestResult
 from .strategies.base import IStrategy
 
@@ -29,7 +29,7 @@ class Orchestrator:
         self.history: list[RawMetrics] = []
         self.stop_reason: StopReason = StopReason.MANUAL
 
-    def run(self) -> TestResult:
+    def run(self, debug=False) -> TestResult:
         """
         Запустить тест
 
@@ -39,7 +39,7 @@ class Orchestrator:
         3. FINISHED - остановка генератора и формирование результата
         """
         try:
-            self._init_phase()
+            self._init_phase(debug)
             self._running_phase()
         except Exception as e:
             self.stop_reason = StopReason.ERROR
@@ -47,13 +47,13 @@ class Orchestrator:
         finally:
             return self._finished_phase()
 
-    def _init_phase(self) -> None:
+    def _init_phase(self, debug) -> None:
         """Фаза инициализации: запуск генератора и настройка начальной нагрузки"""
         self.started_at = datetime.now().timestamp()
         self.state = State.INIT
 
         # Запустить генератор нагрузки
-        self.adapter.launch()
+        self.adapter.launch(debug)
         self._wait_until_ready()
 
         # Получить начальное количество пользователей из стратегии

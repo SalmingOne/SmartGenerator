@@ -13,8 +13,17 @@ class StrategyForm(VerticalGroup):
 
     def compose(self) -> ComposeResult:
         yield Static("Strategy Parameters", classes="section-title")
+
+        groups = {}
         fields = STRATEGY_PARAMS.get(self.strategy_type, [])
+
         for field_def in fields:
+            if field_def.group_label:
+                groups.setdefault(field_def.group_label, []).append(field_def)
+
+
+        for field_def in fields:
+
             default_str = str(field_def.default) if field_def.default is not None else ""
             suffix = " *" if field_def.required else ""
             yield Label(f"{field_def.label}{suffix}")
@@ -28,6 +37,19 @@ class StrategyForm(VerticalGroup):
         await self.remove_children()
         await self.mount(Static("Strategy Parameters", classes="section-title"))
         fields = STRATEGY_PARAMS.get(new_type, [])
+
+        groups = {}
+        fields = STRATEGY_PARAMS.get(self.strategy_type, [])
+
+        for field_def in fields:
+            if field_def.group_label:
+                groups.setdefault(field_def.group_label, []).append(field_def)
+
+        for group_label, field in groups.items():
+            labels = ", ".join(f.label for f in field)
+            await self.mount(Static(f'[bold yellow] !{group_label}: {labels}', classes="group-hint"))
+
+
         for field_def in fields:
             default_str = str(field_def.default) if field_def.default is not None else ""
             suffix = " *" if field_def.required else ""

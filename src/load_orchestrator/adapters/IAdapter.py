@@ -12,7 +12,7 @@ class IAdapter(ABC):
         self._process: subprocess.Popen | None = None
 
     @abstractmethod
-    def launch(self):
+    def launch(self, debug):
         """Запуск генератора"""
         pass
 

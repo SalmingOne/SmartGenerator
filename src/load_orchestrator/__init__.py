@@ -3,7 +3,7 @@ Load Orchestrator - умная система нагрузочного тест�
 """
 
 from .factory import OrchestratorFactory
-from .config import Config
+from .configuration import Config
 from .orchestrator import Orchestrator
 
 __all__ = [

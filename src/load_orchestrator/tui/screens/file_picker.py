@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from textual.app import ComposeResult
@@ -59,7 +60,7 @@ class FilePicker(ModalScreen[str | None]):
 
     def __init__(
         self,
-        root: str = ".",
+        root: str = "/",
         filter_glob: str = "*",
         title: str = "Select File",
     ):
@@ -68,6 +69,7 @@ class FilePicker(ModalScreen[str | None]):
         self.filter_glob = filter_glob
         self.picker_title = title
         self.selected_path: str | None = None
+        self.display_path: str | None = None
 
     def compose(self) -> ComposeResult:
         with Vertical(id="file-picker-dialog"):
@@ -79,19 +81,19 @@ class FilePicker(ModalScreen[str | None]):
                 yield Button.success("Select", id="select_btn", disabled=True)
 
     def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected):
+        self.selected_path = str(event.path.resolve())
         try:
-            rel = event.path.relative_to(Path.cwd())
-            self.selected_path = f"./{rel}"
+            self.display_path = f'./{event.path.relative_to(Path.cwd())}'
         except ValueError:
-            self.selected_path = str(event.path)
+            self.display_path = self.selected_path
         self.query_one("#selected-label", Label).update(
-            f"Selected: {self.selected_path}"
+            f"Selected: {self.display_path}"
         )
         self.query_one("#select_btn", Button).disabled = False
 
     def on_button_pressed(self, event: Button.Pressed):
         if event.button.id == "select_btn":
-            self.dismiss(self.selected_path)
+            self.dismiss(self.display_path)
         elif event.button.id == "cancel_btn":
             self.dismiss(None)
 

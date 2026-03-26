@@ -8,12 +8,7 @@ from textual.worker import Worker, WorkerState
 
 from ...factory import OrchestratorFactory
 from ...models import State
-
-
-def _format_duration(seconds: float) -> str:
-    m, s = divmod(int(seconds), 60)
-    h, m = divmod(m, 60)
-    return f"{h:02d}:{m:02d}:{s:02d}"
+from ...utils import _format_duration
 
 
 class RunScreen(Screen):

@@ -7,7 +7,7 @@ Factory для создания Orchestrator из конфига
 - Orchestrator с правильными зависимостями
 """
 
-from .config import Config
+from .configuration import Config
 from .orchestrator import Orchestrator
 from .adapters.IAdapter import IAdapter
 from .strategies.base import IStrategy
@@ -19,7 +19,6 @@ from .adapters.LocustAdapter import LocustAdapter
 from .strategies.degradation_search import DegradationSearch
 from .strategies.break_point import BreakPoint
 from .strategies.sla_validation import SLAValidation
-from .strategies.target_rps import TargetRPS
 from .strategies.spike import Spike
 from .strategies.canary import Canary
 from .models import SpikeConfig
@@ -40,7 +39,6 @@ class OrchestratorFactory:
         'degradation_search': DegradationSearch,
         'break_point': BreakPoint,
         'sla_validation': SLAValidation,
-        'target_rps': TargetRPS,
         'spike': Spike,
         'canary': Canary,
     }

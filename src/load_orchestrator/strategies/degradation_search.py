@@ -1,15 +1,10 @@
-from collections import deque
-
 from .base import IStrategy
-from ..analytics.metrics_calculator import MetricsCalculator
 from ..models import RawMetrics, Decision
 
 import statistics
 
 
 class DegradationSearch(IStrategy):
-    """
-    """
 
     def __init__(
         self,
@@ -19,25 +14,14 @@ class DegradationSearch(IStrategy):
         window_size: int = 5,  # Размер скользящего окна
         threshold_count: int = 3,  # Сколько проверок из window_size должны превысить порог
     ):
-        """
-        """
+
         self.initial_users = initial_users
         self.step_multiplier = step_multiplier
         self.step_size = step_size
-        self.degradation_threshold = 0.6
         self.window_size = window_size
         self.threshold_count = threshold_count
 
-        self.previous_growth = 0
-
-
-        # История для расчета Locust-SDI
         self.metrics_history: list[RawMetrics] = []
-        self.previous_metrics: RawMetrics | None = None
-        self.last_sdi: float | None = None
-
-        # Скользящее окно для проверки деградации
-        self.violation_window: deque[bool] = deque(maxlen=window_size)
 
 
     def decide(self, metrics: RawMetrics) -> Decision:
@@ -79,6 +63,8 @@ class DegradationSearch(IStrategy):
         1. Линейный рост (step_size): users + step_size
         2. Экспоненциальный рост (step_multiplier): users * step_multiplier
         """
+        if self.step_size is not None:
+            return int(current_users + self.step_size)
         return int(current_users * self.step_multiplier) + 1
 
     def get_wait_time(self) -> int:
@@ -87,6 +73,3 @@ class DegradationSearch(IStrategy):
     def reset(self) -> None:
         """Сбросить внутреннее состояние стратегии"""
         self.metrics_history.clear()
-        self.previous_metrics = None
-        self.last_sdi = None
-        self.violation_window.clear()

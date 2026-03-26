@@ -7,14 +7,16 @@ from ..models import RawMetrics, Decision
 class SLAValidation(IStrategy):
     def __init__(
         self,
-        max_p99: float,
         max_error_rate: float,
+        max_p99: float = None,
+        max_p95: float = None,
         initial_users: int = 10,
         step_multiplier: float = 1.5,
         max_users: int = 1000,
         stabilization_time: int = 30,  # ждём после изменения нагрузки
     ):
         self.max_p99 = max_p99
+        self.max_p95 = max_p95
         self.max_error_rate = max_error_rate
         self.initial_users = initial_users
         self.step_multiplier = step_multiplier
@@ -61,17 +63,28 @@ class SLAValidation(IStrategy):
             return Decision.CONTINUE
 
         avg_p99 = sum(m.p99 for m in self._observation_metrics) / len(self._observation_metrics)
+        avg_p95 = sum(m.p95 for m in self._observation_metrics) / len(self._observation_metrics)
         avg_error_rate = sum(m.error_rate for m in self._observation_metrics) / len(self._observation_metrics)
 
-        if avg_p99 > self.max_p99:
+        if self.max_p95 is not None and avg_p95 > self.max_p95:
+            print(f"⚠️  SLA violation: avg P95={avg_p99:.0f}ms > {self.max_p95}ms")
+            return Decision.STOP
+
+        if self.max_p99 is not None and avg_p99 > self.max_p99:
             print(f"⚠️  SLA violation: avg P99={avg_p99:.0f}ms > {self.max_p99}ms")
             return Decision.STOP
 
         if avg_error_rate > self.max_error_rate:
             print(f"⚠️  SLA violation: avg error_rate={avg_error_rate:.2f}% > {self.max_error_rate}%")
             return Decision.STOP
+        parts = []
+        if self.max_p95:
+            parts.append(f'P95={avg_p95:.0f}ms')
+        if self.max_p99:
+            parts.append(f'P95={avg_p99:.0f}ms')
+        parts.append(f'errors={avg_error_rate:.2f}%')
 
-        print(f"✅ SLA OK: P99={avg_p99:.0f}ms, errors={avg_error_rate:.2f}%")
+        print(f"✅ SLA OK: {', '.join(parts)}")
         # Сбрасываем фазу — оркестратор вызовет get_next_users() и снова изменит нагрузку
         self._phase_started_at = None
         return Decision.CONTINUE

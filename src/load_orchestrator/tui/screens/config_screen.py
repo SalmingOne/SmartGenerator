@@ -1,5 +1,3 @@
-
-
 from pathlib import Path
 
 from textual.app import ComposeResult
@@ -7,7 +5,7 @@ from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Label, Select, Static
 
-from ...config import AdapterConfig, Config, OrchestratorConfig, StrategyConfig
+from ...configuration import AdapterConfig, Config, OrchestratorConfig, StrategyConfig
 from ..strategy_params import ADAPTER_TYPES, STRATEGY_TYPES
 from ..widgets.strategy_form import StrategyForm
 from .file_picker import FilePicker
@@ -106,7 +104,7 @@ class ConfigScreen(Screen):
         elif event.button.id == "browse_yaml":
             self.app.push_screen(
                 FilePicker(
-                    root="./configs",
+                    root=".",
                     filter_glob="*.yaml",
                     title="Select Config YAML",
                 ),
@@ -115,7 +113,7 @@ class ConfigScreen(Screen):
         elif event.button.id == "browse_test_file":
             self.app.push_screen(
                 FilePicker(
-                    root="./tests",
+                    root=".",
                     filter_glob="*.py",
                     title="Select Test File",
                 ),

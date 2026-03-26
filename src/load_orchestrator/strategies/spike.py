@@ -5,14 +5,11 @@ from ..models import RawMetrics, Decision, SpikePhase, SpikeConfig
 class Spike(IStrategy):
     """
     Стратегия резкого скачка нагрузки (Spike Test)
-
-    TODO: Реализовать логику:
     - Резко увеличить нагрузку до spike_users
     - Держать нагрузку spike_duration секунд
     - Проверить:
       * Выдержала ли система скачок
       * Как быстро восстановилась
-    - Опционально: вернуться к baseline и проверить восстановление
     """
 
     def __init__(
@@ -116,6 +113,5 @@ class Spike(IStrategy):
         return 1
 
     def reset(self) -> None:
-        """TODO: Сбросить внутреннее состояние"""
         self._phase = SpikePhase.SPIKE
         self._spike_steps = 0

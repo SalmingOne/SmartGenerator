@@ -26,8 +26,20 @@ class OrchestratorConfig:
     """Конфигурация оркестратора"""
     spawn_rate: int = 10
     max_users: int | None = None
-    monitoring_interval: int = 5
+    monitoring_interval: int = 1
 
+def _resolve_test_file(config_dir, test_file):
+    test_path = Path(test_file)
+    if test_path.is_absolute():
+        if test_path.exists():
+            return test_path
+        raise ValueError(f'Test file {test_file} does not exist')
+
+    current = config_dir.resolve()
+    for parent in [current, *current.parents]:
+        candidate = (parent / test_file).resolve()
+        if candidate.exists():
+            return candidate
 
 @dataclass
 class Config:
@@ -52,6 +64,8 @@ class Config:
             ValueError: Если конфигурация невалидна
         """
         path = Path(path).resolve()
+        config_dir = path.parent
+
         print(path)
         if not path.exists():
             raise FileNotFoundError(f"Config file not found: {path}")
@@ -72,7 +86,8 @@ class Config:
         if 'test_file' not in adapter_data:
             raise ValueError("Missing 'test_file' in adapter config")
 
-        test_file_path = Path(adapter_data['test_file']).resolve()
+        test_file_path = _resolve_test_file(config_dir, adapter_data['test_file'])
+
         if not test_file_path.exists():
             raise ValueError(f"Test file not found: {test_file_path}")
 
@@ -145,9 +160,7 @@ class Config:
             path: Путь к YAML файлу
         """
         path = Path(path)
-        if path.suffix == '.yaml' or path.suffix == '.yml':
-            path.parent.mkdir(parents=True, exist_ok=True)
-            with open(path, 'w', encoding='utf-8') as f:
-                yaml.dump(self.to_dict(), f, default_flow_style=False, allow_unicode=True)
-        else:
-            raise NotImplementedError(f'Not support file type: {path.suffix}')
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(path, 'w', encoding='utf-8') as f:
+            yaml.dump(self.to_dict(), f, default_flow_style=False, allow_unicode=True)

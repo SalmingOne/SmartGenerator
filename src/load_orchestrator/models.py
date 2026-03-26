@@ -55,6 +55,7 @@ class TestResult:
     history: list[RawMetrics] = field(default_factory=list)
 
 
+
 class SpikePhase(Enum):
     BASELINE = auto()  # Начальная нагрузка
     SPIKE = auto()  # Резкий скачок

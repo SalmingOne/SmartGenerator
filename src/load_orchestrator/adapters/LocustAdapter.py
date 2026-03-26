@@ -1,10 +1,12 @@
 import subprocess
 import threading
 from datetime import datetime
+from pathlib import Path
 
 import requests as rq
 
 from ..adapters.IAdapter import IAdapter
+from ..configuration import _resolve_test_file
 from ..models import RawMetrics
 
 
@@ -15,28 +17,34 @@ class LocustAdapter(IAdapter):
     def __init__(
         self, test_file: str, host: str = DEFAULT_HOST, port: int = DEFAULT_PORT
     ):
-        super().__init__(test_file=test_file)
+        resolved = str(_resolve_test_file(Path.cwd(), test_file))
+        print(resolved)
+        super().__init__(test_file=resolved)
         self._port = port
         self._session = rq.Session()
         self._host = f"http://{host}:{self._port}"
-        self.log_file = 'logs.txt'
+        self.log_file = open('logs.txt', 'w')
 
-    def launch(self):
-        self._process = subprocess.Popen(
-            [
-                "locust",
-                "-f",
-                self.test_file,
-                "--web-port",
-                str(self._port),
-            ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            stdin=subprocess.DEVNULL,
-            close_fds=True,
-            # Запускаем в новой сессии — отрывает от controlling terminal
-            start_new_session=True,
-        )
+
+    def launch(self, debug):
+        cmd = [
+                    "locust",
+                    "-f",
+                    self.test_file,
+                    "--web-port",
+                    str(self._port),
+                ]
+        if debug:
+            self._process = subprocess.Popen(cmd)
+        else:
+            self._process = subprocess.Popen(
+                cmd,
+                stdout=self.log_file,
+                stderr=self.log_file,
+                stdin=subprocess.DEVNULL,
+                close_fds=True,
+                start_new_session=True,
+            )
     def is_ready(self):
         try:
             r = self._session.get(self._host)
