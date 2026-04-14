@@ -38,15 +38,6 @@ class Canary(IStrategy):
         self._started_at = None
 
     def decide(self, metrics: RawMetrics) -> Decision:
-        """
-
-        Логика:
-        1. Если error_rate > error_threshold -> STOP (система не работает)
-        2. Если p99 очень большой (> 5000ms) -> STOP (система тормозит)
-        3. Если прошло достаточно времени и всё OK -> STOP (успешная проверка)
-        4. Иначе -> HOLD (продолжаем проверку)
-        """
-        # На первом шаге всегда держим
         if self._checks_done == 0:
             self._started_at = time.time()
             self._checks_done += 1

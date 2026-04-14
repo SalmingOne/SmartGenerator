@@ -26,7 +26,8 @@ class OrchestratorConfig:
     """Конфигурация оркестратора"""
     spawn_rate: int = 10
     max_users: int | None = None
-    monitoring_interval: int = 1
+    monitoring_interval: int = 5
+    max_wait_time: int | None = None
 
 def _resolve_test_file(config_dir, test_file):
     test_path = Path(test_file)
@@ -118,7 +119,8 @@ class Config:
         orchestrator = OrchestratorConfig(
             spawn_rate=orchestrator_data.get('spawn_rate', 10),
             max_users=orchestrator_data.get('max_users'),
-            monitoring_interval=orchestrator_data.get('monitoring_interval', 5)
+            monitoring_interval=orchestrator_data.get('monitoring_interval', 5),
+            max_wait_time=orchestrator_data.get('max_wait_time', None)
         )
 
         return cls(
@@ -148,7 +150,8 @@ class Config:
             'orchestrator': {
                 'spawn_rate': self.orchestrator.spawn_rate,
                 'max_users': self.orchestrator.max_users,
-                'monitoring_interval': self.orchestrator.monitoring_interval
+                'monitoring_interval': self.orchestrator.monitoring_interval,
+                'max_wait_time': self.orchestrator.max_wait_time
             }
         }
 

@@ -86,6 +86,9 @@ class ConfigScreen(Screen):
                 with Horizontal(classes="form-group"):
                     yield Label("Monitoring Interval (sec):")
                     yield Input(value="5", id="monitoring_interval", placeholder="int")
+                with Horizontal(classes="form-group"):
+                    yield Label("Max Wait Time (sec, optional):")
+                    yield Input(value="", id="max_wait_time", placeholder="int or empty")
 
         yield Footer()
 
@@ -152,6 +155,9 @@ class ConfigScreen(Screen):
         self.query_one("#monitoring_interval", Input).value = str(
             config.orchestrator.monitoring_interval
         )
+        self.query_one("#max_wait_time", Input).value = (
+            str(config.orchestrator.max_wait_time) if config.orchestrator.max_wait_time else ""
+        )
 
     def _build_config(self) -> Config:
         adapter = AdapterConfig(
@@ -177,6 +183,7 @@ class ConfigScreen(Screen):
             monitoring_interval=int(
                 self.query_one("#monitoring_interval", Input).value.strip()
             ),
+            max_wait_time=int(mwt_str) if (mwt_str := self.query_one("#max_wait_time", Input).value.strip()) else None,
         )
 
         return Config(adapter=adapter, strategy=strategy, orchestrator=orchestrator)

@@ -51,9 +51,9 @@ class SLAValidation(IStrategy):
         # Накапливаем метрики в observation window
         self._observation_metrics.append(metrics)
 
-
-        # Наблюдение ещё не закончилось — просто копим
-        if elapsed < self.stabilization_time:
+        # Наблюдение ещё не закончилось — просто копим (5 сек после стабилизации)
+        OBSERVATION_WINDOW = 5
+        if elapsed < self.stabilization_time + OBSERVATION_WINDOW:
             return Decision.CONTINUE
 
         return self._check_sla()

@@ -43,9 +43,8 @@ class Orchestrator:
             self._running_phase()
         except Exception as e:
             self.stop_reason = StopReason.ERROR
-            raise e
-        finally:
-            return self._finished_phase()
+            print(f"⚠️  Test error: {e}")
+        return self._finished_phase()
 
     def _init_phase(self, debug) -> None:
         """Фаза инициализации: запуск генератора и настройка начальной нагрузки"""
@@ -116,6 +115,12 @@ class Orchestrator:
                 metrics = self.adapter.get_stats()
                 self.history.append(metrics)
 
+                # Проверяем критические условия оркестратора
+                critical_conditions = self._check_critical_conditions(metrics)
+                if critical_conditions is not None:
+                    self.state = State.FINISHED
+                    self.stop_reason = critical_conditions
+                    break
 
                 # Стратегия принимает решение ПРИ КАЖДОМ мониторинге
                 decision = self.strategy.decide(metrics)
@@ -130,7 +135,6 @@ class Orchestrator:
                     next_users = self.strategy.get_next_users(
                         self.current_users, metrics
                     )
-                    print(next_users)
                     self.adapter.configure(
                         user_count=next_users,
                         spawn_rate=self.config.orchestrator.spawn_rate,
@@ -141,7 +145,7 @@ class Orchestrator:
 
                 next_monitor_time = now + self.config.orchestrator.monitoring_interval
 
-    def _check_critical_conditions(self, metrics: RawMetrics) -> bool:
+    def _check_critical_conditions(self, metrics: RawMetrics) -> StopReason | None:
         """
         Проверить критические условия, требующие немедленной остановки
 
@@ -155,18 +159,22 @@ class Orchestrator:
         """
         # Катастрофический error rate
         if metrics.error_rate >= 50.0:
-            return True
+            return StopReason.DEGRADATION
 
         # RPS упал до нуля при наличии пользователей
         if metrics.users > 0 and metrics.rps == 0.0:
-            return True
+            return StopReason.DEGRADATION
 
         # Превышен лимит пользователей из конфига
         if self.config.orchestrator.max_users is not None:
             if metrics.users >= self.config.orchestrator.max_users:
-                return True
+                return StopReason.MAX_USERS
 
-        return False
+        if self.config.orchestrator.max_wait_time is not None:
+            if datetime.now().timestamp() - self.started_at > self.config.orchestrator.max_wait_time:
+                return StopReason.TIMEOUT
+
+        return None
 
     def _finished_phase(self) -> TestResult:
         """
@@ -179,8 +187,14 @@ class Orchestrator:
         self.finished_at = datetime.now().timestamp()
 
         # Остановить генератор нагрузки
-        self.adapter.stop()
-        self.adapter.shutdown()
+        try:
+            self.adapter.stop()
+        except Exception:
+            pass
+        try:
+            self.adapter.shutdown()
+        except Exception:
+            pass
 
         # Найти максимальную стабильную нагрузку
         max_stable_users = 0

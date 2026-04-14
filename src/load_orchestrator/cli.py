@@ -12,33 +12,30 @@ def main(config: str, verbose: bool, debug: bool):
     Load Orchestrator - Интеллектуальный фреймворк для нагрузочного тестирования
     """
 
-    # CLI режим
     click.echo("Starting adaptive load test...")
 
-    # TODO: Загрузить конфиг
     orchestrator = OrchestratorFactory.from_yaml(config)
-
     result = orchestrator.run(debug=debug)
-
-    # TODO: Вывести результаты
     print_results(result, verbose)
 
 
 def print_results(result, verbose: bool):
-    print("Results: ", result)
-
-    print("═══ Test Finished ═══")
+    click.echo("\n═══════════════════════════════")
+    click.echo("         Test Finished         ")
+    click.echo("═══════════════════════════════")
     if result:
-        print(f"  Stop Reason: {result.stop_reason.name}")
-        print(f"  Max Stable Users: {result.max_stable_users}")
-        print(f"  Max Stable RPS: {result.max_stable_rps:.1f}")
+        click.echo(f"  Stop Reason   : {result.stop_reason.name}")
+        click.echo(f"  Max Users     : {result.max_stable_users}")
+        click.echo(f"  Max RPS       : {result.max_stable_rps:.1f}")
         if result.started_at and result.finished_at:
             dur = result.finished_at - result.started_at
-            print(f"  Duration: {_format_duration(dur)}")
-        print(f"  Data Points: {len(result.history)}")
-    if verbose:
+            click.echo(f"  Duration      : {_format_duration(dur)}")
+        click.echo(f"  Data Points   : {len(result.history)}")
+    click.echo("═══════════════════════════════\n")
+    if verbose and result:
+        click.echo("History:")
         for step, res in enumerate(result.history):
-            print(f'Step #{step}: {res}')
+            click.echo(f"  #{step:03d}: users={res.users} rps={res.rps:.1f} p95={res.p95:.0f}ms err={res.error_rate:.1f}%")
 
 
 if __name__ == '__main__':

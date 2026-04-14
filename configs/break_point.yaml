@@ -1,15 +1,15 @@
 adapter:
-  type: locust
-  test_file: ./tests/load_tests/locustfile_demo.py
   host: 0.0.0.0
   port: 8092
-
-strategy:
-  type: break_point
-  initial_users: 10
-  step_multiplier: 10
-  error_threshold: 10
-
+  test_file: ./tests/load_tests/locustfile_demo.py
+  type: locust
 orchestrator:
+  max_users: 12
+  max_wait_time: 123
+  monitoring_interval: 52
   spawn_rate: 1000
-  опишиmonitoring_interval: 5
+strategy:
+  error_threshold: 10.0
+  initial_users: 10
+  step_multiplier: 10.0
+  type: break_point

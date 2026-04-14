@@ -113,5 +113,8 @@ class Spike(IStrategy):
         return 1
 
     def reset(self) -> None:
-        self._phase = SpikePhase.SPIKE
-        self._spike_steps = 0
+        self._phase = SpikePhase.BASELINE
+        self.phase_start_time = None
+        self.baseline_metrics = None
+        self.spike_metrics = []
+        self.recovery_metrics = []

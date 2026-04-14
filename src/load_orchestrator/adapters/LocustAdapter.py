@@ -50,8 +50,13 @@ class LocustAdapter(IAdapter):
             r = self._session.get(self._host)
         except:
             print(f"⚠️ Locust не отвечает на {self._host}")
-            return
+            return False
         return r.status_code == 200
+
+    def shutdown(self):
+        super().shutdown()
+        if self.log_file and not self.log_file.closed:
+            self.log_file.close()
 
     def configure(self, **kwargs):
         self._session.post(f"{self._host}/swarm", data=kwargs)
@@ -70,12 +75,11 @@ class LocustAdapter(IAdapter):
             timestamp=datetime.now().timestamp(),
             users=data.get("user_count", 0),
             rps=data.get("total_rps", 0),
-            rt_avg=aggregated.get("avg_response_time", 0),  # Среднее время ответа
+            rt_avg=aggregated.get("avg_response_time", 0),
             p50=aggregated.get("median_response_time", 0),
             p95=aggregated.get("response_time_percentile_0.95", 0),
             p99=aggregated.get("response_time_percentile_0.99", 0),
-            error_rate=data.get("fail_ratio", 0)
-            * 100,  # fail_ratio это 0.0-1.0, переводим в %
+            error_rate=data.get("fail_ratio", 0) * 100,
             total_requests=aggregated.get("num_requests", 0),
             failed_requests=aggregated.get("num_failures", 0),
         )

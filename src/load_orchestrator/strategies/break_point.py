@@ -81,4 +81,15 @@ class BreakPoint(IStrategy):
         return int(current_users * self.step_multiplier)
 
     def reset(self) -> None:
-        self.previous_metrics = None
+        self.previous_metrics = RawMetrics(
+            timestamp=0,
+            users=0,
+            rps=0,
+            rt_avg=0,
+            p50=0,
+            p95=0,
+            p99=0,
+            failed_requests=0,
+            error_rate=0,
+            total_requests=0,
+        )
