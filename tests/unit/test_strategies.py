@@ -1,3 +1,5 @@
+import time
+
 from load_orchestrator.models import Decision, SpikeConfig, SpikePhase
 from load_orchestrator.strategies.degradation_search import DegradationSearch
 from load_orchestrator.strategies.break_point import BreakPoint
@@ -14,6 +16,13 @@ class TestDegradationSearch:
         strategy = DegradationSearch()
         # меньше 5 точек — ещё не хватает данных
         for _ in range(4):
+            decision = strategy.decide(make_metrics(p95=200.0))
+        assert decision == Decision.CONTINUE
+
+    def test_continue_when_system_is_stable(self):
+        strategy = DegradationSearch()
+        # меньше 5 точек — ещё не хватает данных
+        for _ in range(10):
             decision = strategy.decide(make_metrics(p95=200.0))
         assert decision == Decision.CONTINUE
 
@@ -102,13 +111,26 @@ class TestSLAValidation:
         assert decision == Decision.CONTINUE
 
     def test_stop_when_avg_p99_exceeds_threshold(self):
-        pass
+        strategy = SLAValidation(max_error_rate=1.0, stabilization_time=1, max_p99=10.0)
+        strategy.decide(make_metrics(p99=5.0))
+        time.sleep(6)
+        decision = strategy.decide(make_metrics(p99=50.0))
+        assert decision == Decision.STOP
 
     def test_stop_when_avg_error_rate_exceeds_threshold(self):
-        pass
+        strategy = SLAValidation(max_error_rate=5.0, stabilization_time=1)
+        strategy.decide(make_metrics(error_rate=1.0))
+        time.sleep(6)
+        decision = strategy.decide(make_metrics(error_rate=10.0))
+        assert decision == Decision.STOP
 
     def test_continue_and_reset_when_sla_met(self):
-        pass
+        strategy = SLAValidation(max_error_rate=5.0,max_p99=10.0, stabilization_time=1)
+        for i in range(10):
+            strategy.decide(make_metrics(error_rate=0.0, p99=1.0))
+        time.sleep(6)
+        decision = strategy.decide(make_metrics(error_rate=5.0, p99=10.0))
+        assert decision == Decision.CONTINUE
 
     def test_get_next_users_does_not_exceed_max_users(self):
         strategy = SLAValidation(max_error_rate=1.0, max_users=100)
@@ -197,10 +219,17 @@ class TestCanary:
         assert decision == Decision.STOP
 
     def test_stop_when_p99_exceeds_threshold(self):
-        pass
+        strategy = Canary(percentile_threshold=5.0)
+        strategy.decide(make_metrics())
+        decision = strategy.decide(make_metrics(p99=6.0))
+        assert decision == Decision.STOP
 
     def test_stop_after_canary_duration(self):
-        pass
+        strategy = Canary(canary_users=5, canary_duration=5)
+        strategy.decide(make_metrics())
+        time.sleep(6)
+        decision = strategy.decide(make_metrics())
+        assert decision == Decision.STOP
 
     def test_always_returns_canary_users(self):
         strategy = Canary(canary_users=5)
