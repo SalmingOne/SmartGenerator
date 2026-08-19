@@ -1,21 +1,65 @@
 import click
 from .factory import OrchestratorFactory
 from .utils import _format_duration
+import shlex
 
 
 @click.command()
 @click.option('-c', '--config', required=True, help='Path to config file')
 @click.option('-v', '--verbose', is_flag=True, help='Verbose output')
 @click.option('-d', '--debug', is_flag=True, help='Debug mode', default=False)
-def main(config: str, verbose: bool, debug: bool):
+@click.option(
+    '--locust-arg',
+    'locust_args',
+    multiple=True,
+    help='Pass argument to locust (can be used multiple times). Example: --locust-arg="--headless" --locust-arg="--users=100"'
+)
+@click.option(
+    '--locust-args',
+    'locust_args_raw',
+    help='Raw string of locust arguments. Example: "--headless --users 100 --run-time 5m"'
+)
+@click.argument('locust_extra', nargs=-1)
+def main(
+        config: str,
+        verbose: bool,
+        debug: bool,
+        locust_args: tuple[str, ...],
+        locust_args_raw: str | None,
+        locust_extra: tuple[str, ...]
+):
     """
     Load Orchestrator - Интеллектуальный фреймворк для нагрузочного тестирования
+
+    Examples:
+        load-orchestrator -c config.yaml
+        load-orchestrator -c config.yaml --locust-arg="--headless" --locust-arg="--users=100"
+        load-orchestrator -c config.yaml --locust-args="--headless --users 100 --run-time 5m"
+        load-orchestrator -c config.yaml -- --headless --users 100
     """
 
+    # Собираем все locust аргументы
+    collected_args = list(locust_args)
+
+    if locust_args_raw:
+        collected_args.extend(shlex.split(locust_args_raw))
+
+    collected_args.extend(locust_extra)
+
+    # CLI режим
     click.echo("Starting adaptive load test...")
 
+    if collected_args:
+        click.echo(f"Locust args: {collected_args}")
+
     orchestrator = OrchestratorFactory.from_yaml(config)
-    result = orchestrator.run(debug=debug)
+
+    # Передаём аргументы в оркестратор
+    result = orchestrator.run(
+        debug=debug,
+        locust_args=collected_args if collected_args else None
+    )
+
     print_results(result, verbose)
 
 

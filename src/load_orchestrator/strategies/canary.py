@@ -56,8 +56,6 @@ class Canary(IStrategy):
 
     def get_next_users(self, current_users: int, metrics: RawMetrics) -> int:
         """
-        TODO: Вычислить следующее количество пользователей
-
         Всегда возвращать canary_users (фиксированная минимальная нагрузка)
         """
         return self.canary_users
@@ -72,6 +70,5 @@ class Canary(IStrategy):
         return self.canary_duration
 
     def reset(self) -> None:
-        """TODO: Сбросить внутреннее состояние"""
         self._checks_done = 0
         self._started_at = None

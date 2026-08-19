@@ -1,7 +1,7 @@
 import subprocess
 from abc import ABC, abstractmethod
 
-from load_orchestrator.models import RawMetrics
+from ..models import RawMetrics
 
 
 class IAdapter(ABC):
@@ -17,10 +17,13 @@ class IAdapter(ABC):
         pass
 
     def shutdown(self):
-        """Остановка генератора"""
-        if self._process:
-            self._process.terminate()
-            self._process.wait()
+        if self._process and self._process.poll() is None:
+            self._process.send_signal(signal.SIGINT)
+            try:
+                self._process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                self._process.kill()
+                self._process.wait()
             self._process = None
 
     @abstractmethod

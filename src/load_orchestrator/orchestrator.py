@@ -2,6 +2,7 @@ import time
 from datetime import datetime
 
 from .adapters.IAdapter import IAdapter
+from .adapters.LocustAdapter import LocustAdapter
 from .configuration import Config
 from .models import Decision, RawMetrics, State, StopReason, TestResult
 from .strategies.base import IStrategy
@@ -21,6 +22,7 @@ class Orchestrator:
         self.config = config
         self.adapter = adapter
         self.strategy = strategy
+        self.connection_attempts = 0
 
         self.state = State.INIT
         self.current_users: int = 0
@@ -29,7 +31,7 @@ class Orchestrator:
         self.history: list[RawMetrics] = []
         self.stop_reason: StopReason = StopReason.MANUAL
 
-    def run(self, debug=False) -> TestResult:
+    def run(self, debug=False, locust_args: list[str] = None) -> TestResult:
         """
         Запустить тест
 
@@ -38,21 +40,34 @@ class Orchestrator:
         2. RUNNING - главный цикл сбора метрик и принятия решений
         3. FINISHED - остановка генератора и формирование результата
         """
+        if locust_args and isinstance(self.adapter, LocustAdapter):
+            self.adapter.update_locust_args(locust_args)
+
+        # Или передаём при запуске
         try:
-            self._init_phase(debug)
+            self._init_phase(debug, locust_args)
             self._running_phase()
         except Exception as e:
             self.stop_reason = StopReason.ERROR
-            print(f"⚠️  Test error: {e}")
-        return self._finished_phase()
+            raise e
+        finally:
+            result = self._finished_phase()
+        return result
 
-    def _init_phase(self, debug) -> None:
+    def _init_phase(self, debug, locust_args = None) -> None:
         """Фаза инициализации: запуск генератора и настройка начальной нагрузки"""
         self.started_at = datetime.now().timestamp()
         self.state = State.INIT
 
         # Запустить генератор нагрузки
-        self.adapter.launch(debug)
+        try:
+            if isinstance(self.adapter, LocustAdapter):
+                self.adapter.launch(debug=debug, extra_args=locust_args)
+            else:
+                self.adapter.launch(debug=debug)
+        except Exception as e:
+            self.stop_reason = StopReason.ERROR
+            raise e
         self._wait_until_ready()
 
         # Получить начальное количество пользователей из стратегии
@@ -65,7 +80,8 @@ class Orchestrator:
     def _wait_until_ready(self) -> None:
         """Ожидание готовности генератора нагрузки"""
         while not self.adapter.is_ready():
-            time.sleep(1)
+            time.sleep(5)
+            self.connection_attempts += 1
 
     def _configure_initial_load(self) -> None:
         """
@@ -135,13 +151,13 @@ class Orchestrator:
                     next_users = self.strategy.get_next_users(
                         self.current_users, metrics
                     )
+                    print(next_users)
                     self.adapter.configure(
                         user_count=next_users,
                         spawn_rate=self.config.orchestrator.spawn_rate,
                     )
                     self.current_users = next_users
                     next_change_time = now + self.strategy.get_wait_time()
-
 
                 next_monitor_time = now + self.config.orchestrator.monitoring_interval
 
@@ -187,14 +203,8 @@ class Orchestrator:
         self.finished_at = datetime.now().timestamp()
 
         # Остановить генератор нагрузки
-        try:
-            self.adapter.stop()
-        except Exception:
-            pass
-        try:
-            self.adapter.shutdown()
-        except Exception:
-            pass
+        self.adapter.stop()
+        self.adapter.shutdown()
 
         # Найти максимальную стабильную нагрузку
         max_stable_users = 0

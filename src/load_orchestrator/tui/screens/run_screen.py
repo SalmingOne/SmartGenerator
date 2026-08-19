@@ -69,6 +69,7 @@ class RunScreen(Screen):
             self.app.switch_screen("metrics")
 
     def _start_test(self) -> None:
+        self.app.test_error = None
         config = getattr(self.app, "current_config", None)
         if config is None:
             self.notify("No config loaded. Go to Config screen first.", severity="error")
@@ -102,15 +103,25 @@ class RunScreen(Screen):
         self._poll_timer = self.set_interval(1.0, self._poll_metrics)
 
     def _run_test(self) -> None:
-        result = self.app.orchestrator.run()
-        self.app.test_result = result
+        try:
+            result = self.app.orchestrator.run()
+            self.app.test_result = result
+            self.app.test_error = None
+        except Exception as e:
+            self.app.test_result = None
+            self.app.test_error = e  # сохраняем объект исключения
 
     def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
         if event.worker is not self._worker:
             return
         if event.state == WorkerState.SUCCESS:
-            self._on_test_finished()
+            if getattr(self.app, "test_error", None):
+                self._on_test_error(self.app.test_error)
+                self.app.test_error = None
+            else:
+                self._on_test_finished()
         elif event.state == WorkerState.ERROR:
+            # Это ошибка самого worker (не из оркестратора)
             self._on_test_error(event.worker.error)
 
     def _on_test_finished(self) -> None:
@@ -167,7 +178,15 @@ class RunScreen(Screen):
         if orch is None:
             return
 
-        history = orch.history
+        # Проверяем, не упал ли locust
+        try:
+            history = orch.history
+        except Exception as e:
+            log = self.query_one("#log-panel", RichLog)
+            log.write(f"[bold red]Locust error: {e}[/bold red]")
+            self._stop_test()
+            return
+
         new_count = len(history)
 
         if new_count > self._last_history_len:

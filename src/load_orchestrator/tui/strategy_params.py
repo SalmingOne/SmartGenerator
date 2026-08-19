@@ -15,12 +15,22 @@ class FieldDef:
 STRATEGY_PARAMS: dict[str, list[FieldDef]] = {
     "degradation_search": [
         FieldDef("initial_users", "Initial Users", "int", 10),
-        FieldDef("step_multiplier", "Step Multiplier", "float", 1.5, group_label="Step Multiplier: One of the fields "
-                                                                                 "is required"),
-        FieldDef("step_size", "Step Size (linear) [Priority]", "int", None, group_label="Step Multiplier: One of the "
-                                                                                    "fields is required"),
-        FieldDef("window_size", "Window Size", "int", 5),
-        FieldDef("threshold_count", "Threshold Count", "int", 3),
+        FieldDef("step_multiplier", "Step Multiplier", "float", 1.5, group_label="Step: One of the fields is required"),
+        FieldDef("step_size", "Step Size (linear) [Priority]", "int", None,
+                 group_label="Step: One of the fields is required"),
+        # Core detection
+        FieldDef("window_size", "Window Size", "int", 5, group_label="Core Detection"),
+        FieldDef("threshold_count", "Threshold Count", "int", 3, group_label="Core Detection"),
+        # Baseline
+        FieldDef("error_multiplier", "Error Multiplier", "float", 3.0, group_label="Baseline"),
+        # Thresholds
+        FieldDef("absolute_latency_limit", "Absolute Latency Limit (ms)", "int", 3000, group_label="Thresholds"),
+        FieldDef("relative_multiplier", "Relative Multiplier", "float", 2.0, group_label="Thresholds"),
+        FieldDef("required_ratio", "Required Ratio", "float", 0.6, group_label="Thresholds"),
+        # Trend
+        FieldDef("trend_window", "Trend Window", "int", 10, group_label="Trend"),
+        FieldDef("trend_slope_threshold", "Trend Slope Threshold (ms/step)", "float", 100.0, group_label="Trend"),
+
     ],
     "break_point": [
         FieldDef("initial_users", "Initial Users", "int", 10),

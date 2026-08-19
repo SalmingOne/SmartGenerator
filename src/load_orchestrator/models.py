@@ -34,7 +34,7 @@ class RawMetrics:
     timestamp: float
     users: int
     rps: float
-    rt_avg: float
+    rt_avg: float  # Среднее время ответа (ms) - для Locust-SDI
     p50: float
     p95: float
     p99: float
